@@ -8,10 +8,12 @@ use rand::Rng;
 
 const NUM_PLAYERS: usize = 100;
 const NUM_SURVIVORS: usize = 10;
-const GENERATIONS: usize = 100;
+const GENERATIONS: usize = 1;
 
 fn main() {
     let mut players = Vec::with_capacity(NUM_PLAYERS);
+
+    populate(&mut players);
 
     for _ in 0..GENERATIONS {
         repopulate(&mut players);
@@ -46,6 +48,12 @@ fn find_fittest(players: &mut Vec<Player>) {
 
     // Keep only the best
     players.truncate(NUM_SURVIVORS);
+}
+
+fn populate(players: &mut Vec<Player>) {
+    for _ in 0..NUM_PLAYERS {
+        players.push(Player::new());
+    }
 }
 
 fn repopulate(players: &mut Vec<Player>) {

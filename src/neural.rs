@@ -3,6 +3,9 @@ extern crate rand;
 use std::cell::RefCell;
 use std::rc::Rc;
 
+const NUM_LAYERS: usize = 3;
+const NUM_NEURONS: usize = 9;
+
 fn sigmoid(x: f32) -> f32 {
     1f32 / (1f32 + (-x).exp())
 }
@@ -13,11 +16,11 @@ struct Neuron {
 }
 
 impl Neuron {
-    fn new() -> Rc<RefCell<Neuron>> {
-        Rc::new(RefCell::new(Neuron {
+    fn new() -> Neuron {
+        Neuron {
             output: 0f32,
-            connections: Vec::new(),
-        }))
+            connections: Vec::with_capacity(NUM_NEURONS),
+        }
     }
 
     fn add_connection(&mut self, from: Rc<RefCell<Neuron>>) {
@@ -54,74 +57,60 @@ impl Connection {
 }
 
 pub struct Network {
-    inputs: [Rc<RefCell<Neuron>>; 9],
-    hiddens: [Rc<RefCell<Neuron>>; 9],
-    outputs: [Rc<RefCell<Neuron>>; 9],
+    layers: Vec<Vec<Rc<RefCell<Neuron>>>>,
 }
 
 impl Network {
     pub fn new() -> Network {
-        let inputs = [
-            Neuron::new(), Neuron::new(), Neuron::new(),
-            Neuron::new(), Neuron::new(), Neuron::new(),
-            Neuron::new(), Neuron::new(), Neuron::new(),
-        ];
         
-        let hiddens = [
-            Neuron::new(), Neuron::new(), Neuron::new(),
-            Neuron::new(), Neuron::new(), Neuron::new(),
-            Neuron::new(), Neuron::new(), Neuron::new(),
-        ];
+        // Populate layers of neurons
+        let mut layers: Vec<Vec<Rc<RefCell<Neuron>>>> = 
+                Vec::with_capacity(NUM_LAYERS);
+        
+        for i in 0..NUM_LAYERS {
+            
+            let mut neurons = Vec::with_capacity(NUM_NEURONS);
+            for _ in 0..NUM_NEURONS {
+                
+                let mut neuron = Neuron::new();
+                
+                // Interconnect the layers
+                if i > 0 {
+                    for input in layers[i-1].iter() {
+                        neuron.add_connection(input.clone());
+                    }
+                }
 
-        let outputs = [
-            Neuron::new(), Neuron::new(), Neuron::new(),
-            Neuron::new(), Neuron::new(), Neuron::new(),
-            Neuron::new(), Neuron::new(), Neuron::new(),
-        ];
-
-        // Connect hiddens to the inputs
-        for i in 0..hiddens.len() {
-            let mut hidden = hiddens[i].borrow_mut();
-     
-            for j in 0..inputs.len() {
-                hidden.add_connection(inputs[j].clone());
+                neurons.push(Rc::new(RefCell::new(neuron)));
             }
+            layers.push(neurons);
         }
-     
-        // Connect outputs to the hiddens
-        for i in 0..outputs.len() {
-            let mut output = outputs[i].borrow_mut();
-     
-            for j in 0..hiddens.len() {
-                output.add_connection(hiddens[j].clone());
-            }
-        }
-
+        
         Network {
-            inputs: inputs,
-            hiddens: hiddens,
-            outputs: outputs,
+            layers: layers,
         }
     }
 
-    pub fn calc(&mut self, inputs: [f32; 9]) -> [f32; 9] {
-        // Set input values
-        for i in 0..self.inputs.len() {
-            let mut input_neuron = self.inputs[i].borrow_mut();
-            input_neuron.output = inputs[i];
-        }
-
-        // Calculate hidden neuron outputs
-        for i in 0..self.hiddens.len() {
-            let mut hidden_neuron = self.hiddens[i].borrow_mut();
-            hidden_neuron.calc_output();
-        }
-        
+    pub fn calc(&mut self, inputs: [f32; NUM_NEURONS]) -> [f32; NUM_NEURONS] {
         let mut outputs = [0f32; 9];
-        // Calculate output neurons
-        for i in 0..self.outputs.len() {
-            let mut output_neuron = self.outputs[i].borrow_mut();
-            outputs[i] = output_neuron.calc_output();
+        
+        for (i, neurons) in self.layers.iter().enumerate() {
+            for (j, neuron_cell) in neurons.iter().enumerate() {
+                let mut neuron = neuron_cell.borrow_mut();
+                
+                if i == 0 {
+                    // Set input values
+                    neuron.output = inputs[j];
+                } else {
+                    // Calculate neurons
+                    neuron.calc_output();
+                    
+                    // Capture outputs
+                    if i == NUM_LAYERS - 1 {
+                        outputs[j] = neuron.output;
+                    }
+                }
+            }
         }
 
         return outputs;
