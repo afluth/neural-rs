@@ -126,4 +126,8 @@ impl Network {
 
         return outputs;
     }
+
+    pub fn reproduce(&self, partner: &Network) -> Network {
+        return Network::new();
+    }
 }
