@@ -5,6 +5,7 @@ use std::rc::Rc;
 
 const NUM_LAYERS: usize = 3;
 const NUM_NEURONS: usize = 9;
+const NUM_WEIGHTS: usize = 162;
 
 fn sigmoid(x: f32) -> f32 {
     1f32 / (1f32 + (-x).exp())
@@ -54,7 +55,16 @@ impl Connection {
             from: from,
         }
     }
+
+    fn with_weight(weight: f32, from: Rc<RefCell<Neuron>>) -> Connection {
+        Connection {
+            weight: weight,
+            from: from,
+        }
+    }
 }
+
+type Weights = [[[f32; NUM_NEURONS]; NUM_NEURONS]; NUM_LAYERS - 1];
 
 pub struct Network {
     layers: Vec<Vec<Rc<RefCell<Neuron>>>>,
@@ -78,6 +88,41 @@ impl Network {
                 if i > 0 {
                     for input in layers[i-1].iter() {
                         neuron.add_connection(input.clone());
+                    }
+                }
+
+                neurons.push(Rc::new(RefCell::new(neuron)));
+            }
+            layers.push(neurons);
+        }
+        
+        Network {
+            layers: layers,
+        }
+    }
+
+    fn from_weights(weights: Vec<f32>) -> Network {
+        
+        // Populate layers of neurons
+        let mut layers: Vec<Vec<Rc<RefCell<Neuron>>>> = 
+                Vec::with_capacity(NUM_LAYERS);
+        let mut weight_index = 0;
+        
+        for i in 0..NUM_LAYERS {
+            
+            let mut neurons = Vec::with_capacity(NUM_NEURONS);
+            for _ in 0..NUM_NEURONS {
+                
+                let mut neuron = Neuron::new();
+                
+                // Interconnect the layers
+                if i > 0 {
+                    for input in layers[i-1].iter() {
+                        //neuron.add_connection(input.clone());
+                        neuron.connections
+                            .push(Connection::with_weight(
+                                weights[weight_index], input.clone()));
+                        weight_index += 1;
                     }
                 }
 
@@ -116,7 +161,33 @@ impl Network {
         return outputs;
     }
 
+    pub fn get_weights(&self) -> Vec<f32> {
+        let mut weights = Vec::with_capacity(NUM_WEIGHTS);
+
+        for neurons in self.layers.iter() {
+            for neuron_cell in neurons.iter() {
+                let neuron = neuron_cell.borrow();
+
+                for connection in neuron.connections.iter() {
+                    weights.push(connection.weight);
+                }
+            }
+        }
+
+        return weights;
+    }
+
     pub fn reproduce(&self, partner: &Network) -> Network {
-        return Network::new();
+        //let mut child_weights = NEW_WEIGHTS;
+        
+        let a_weights = self.get_weights();
+        let b_weights = partner.get_weights();
+
+        let child_weights: Vec<f32> = a_weights.into_iter()
+                .zip(b_weights)
+                .map(|(a, b)| if rand::random::<bool>() { a } else { b })
+                .collect();
+
+        return Network::from_weights(child_weights);
     }
 }

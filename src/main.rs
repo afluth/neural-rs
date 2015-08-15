@@ -6,9 +6,9 @@ mod game;
 use game::*;
 use rand::Rng;
 
-const NUM_PLAYERS: usize = 100;
-const NUM_SURVIVORS: usize = 10;
-const GENERATIONS: usize = 1;
+const NUM_PLAYERS: usize = 1000;
+const NUM_SURVIVORS: usize = 100;
+const GENERATIONS: usize = 100;
 
 fn main() {
     let mut players = Vec::with_capacity(NUM_PLAYERS);
@@ -19,13 +19,26 @@ fn main() {
         repopulate(&mut players);
     
         find_fittest(&mut players);   
-        
+        /*
         println!("len: {}", players.len());
-        for p in players.iter_mut() {
+        for p in players.iter_mut().take(10) {
             println!("{}", p.wins);
             p.wins = 0;
         }
-        println!("-----------");
+        */
+        {
+            let best = &players[0];
+            println!("Wins: {}", best.wins);
+            //for w in best.neural_net.get_weights() {
+            //    println!("{}", w);
+            //}
+            println!("-----------");
+        }
+
+        // Reset wins
+        for player in players.iter_mut() {
+            player.wins = 0;
+        }
     }
 
 
@@ -60,11 +73,12 @@ fn repopulate(players: &mut Vec<Player>) {
     let mut rng = rand::thread_rng();
 
     // Repopulate any culled players
-    for _ in 0..(NUM_PLAYERS - players.len()) {
-        //players[index];
-        
-        println!("{}", rng.gen_range(0, NUM_SURVIVORS));
+    for i in 0..(NUM_PLAYERS - players.len()) {
         //rng.choose(&players[0..NUM_SURVIVORS-1]);
         
+        let child = players[i % NUM_SURVIVORS]
+                    .reproduce(&players[rng.gen_range(0, NUM_SURVIVORS)]);
+
+        players.push(child);
     }
 }

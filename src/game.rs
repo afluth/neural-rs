@@ -1,7 +1,7 @@
 use neural::*;
 
 pub struct Player {
-    neural_net: Network,
+    pub neural_net: Network,
     mark: char,
     pub wins: u16,
 }
@@ -44,7 +44,7 @@ impl Player {
         return index;
     }
 
-    fn reproduce(&self, partner: &Player) -> Player {
+    pub fn reproduce(&self, partner: &Player) -> Player {
         return Player {
             neural_net: self.neural_net.reproduce(&partner.neural_net),
             mark: '*',
