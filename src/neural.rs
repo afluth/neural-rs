@@ -2,10 +2,11 @@ extern crate rand;
 
 use std::cell::RefCell;
 use std::rc::Rc;
+use rand::Rng;
 
-const NUM_LAYERS: usize = 3;
+const NUM_LAYERS: usize = 4;
 const NUM_NEURONS: usize = 9;
-const NUM_WEIGHTS: usize = 162;
+const NUM_WEIGHTS: usize = 81 * 3;
 
 fn sigmoid(x: f32) -> f32 {
     1f32 / (1f32 + (-x).exp())
@@ -64,8 +65,6 @@ impl Connection {
     }
 }
 
-type Weights = [[[f32; NUM_NEURONS]; NUM_NEURONS]; NUM_LAYERS - 1];
-
 pub struct Network {
     layers: Vec<Vec<Rc<RefCell<Neuron>>>>,
 }
@@ -101,7 +100,7 @@ impl Network {
         }
     }
 
-    fn from_weights(weights: Vec<f32>) -> Network {
+    pub fn from_weights(weights: Vec<f32>) -> Network {
         
         // Populate layers of neurons
         let mut layers: Vec<Vec<Rc<RefCell<Neuron>>>> = 
@@ -118,7 +117,6 @@ impl Network {
                 // Interconnect the layers
                 if i > 0 {
                     for input in layers[i-1].iter() {
-                        //neuron.add_connection(input.clone());
                         neuron.connections
                             .push(Connection::with_weight(
                                 weights[weight_index], input.clone()));
@@ -185,9 +183,27 @@ impl Network {
 
         let child_weights: Vec<f32> = a_weights.into_iter()
                 .zip(b_weights)
-                .map(|(a, b)| if rand::random::<bool>() { a } else { b })
+                .map(|(a, b)| {
+                    // A 1 in 200 chance of mutation occuring
+                    if rand::thread_rng().gen_weighted_bool(100) { 
+                        rand::random::<f32>()
+                    }
+                    else if rand::random::<bool>() { a } else { b }
+                })
                 .collect();
 
         return Network::from_weights(child_weights);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::sigmoid;
+    
+    #[test]
+    fn test_sigmoid() {
+        assert_eq!(0, 0);
+        assert_eq!(0.62245935, sigmoid(0.5));
+        assert_eq!(0.37754068, sigmoid(-0.5));
     }
 }
