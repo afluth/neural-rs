@@ -154,49 +154,54 @@ impl Player for AiPlayer {
     }
 }
 
-pub fn play_game(player1: &mut Player, player2: &mut Player) {
+pub fn play_game<P1: Player, P2: Player>
+        (player1: &mut P1, player2: &mut P2) {
     let mut board = [' '; 9];
     player1.set_mark('X');
     player2.set_mark('O');
 
     for i in 0..9 {
-        // Select the current player
-        let (player, opponent): (&mut Player, &mut Player) = 
-        if (i % 2) == 0 { 
-            (player1, player2) 
-        } else { 
-            (player2, player1) 
-        };
+        let mut win;
 
-        // Make move        
-        player.play(&mut board);
-        
-        /*
-        println!("*****");
-        println!("{}|{}|{}", board[0], board[1], board[2]);
-        println!("-+-+-");
-        println!("{}|{}|{}", board[3], board[4], board[5]);
-        println!("-+-+-");
-        println!("{}|{}|{}", board[6], board[7], board[8]);
-        */
-        
-        // Once possible, check for win
-        if i >= 5 &&
-           ((board[0] != ' ' && board[1] == board[0] && board[2] == board[0]) ||
-           (board[3] != ' ' && board[4] == board[3] && board[5] == board[3]) ||
-           (board[6] != ' ' && board[7] == board[6] && board[8] == board[6]) ||
-           (board[0] != ' ' && board[3] == board[0] && board[6] == board[0]) ||
-           (board[1] != ' ' && board[4] == board[1] && board[7] == board[1]) ||
-           (board[2] != ' ' && board[5] == board[2] && board[8] == board[2]) ||
-           (board[0] != ' ' && board[4] == board[0] && board[8] == board[0]) ||
-           (board[2] != ' ' && board[4] == board[2] && board[6] == board[2]))
-        {
-            player.game_result(GameResult::Win);
-            opponent.game_result(GameResult::Loss);
+        if (i % 2) == 0 { 
+            win = take_turn(player1, player2, &mut board, i);
+        } else { 
+            win = take_turn(player2, player1, &mut board, i); 
+        }
+
+        if win {
             return;
         }
     }
     // Tie game
     player1.game_result(GameResult::Tie);
     player2.game_result(GameResult::Tie);
+}
+
+fn take_turn<P: Player, O: Player>
+        (player: &mut P, opponent: &mut O, 
+         board: &mut [char; 9], turn: usize) -> bool {
+    
+    // Make move        
+    player.play(board);
+    
+    // Once possible, check for win
+    if turn >= 5 && check_for_win(board) {
+        player.game_result(GameResult::Win);
+        opponent.game_result(GameResult::Loss);
+        return true;
+    }
+
+    return false;
+}
+
+fn check_for_win(board: &[char; 9]) -> bool {
+    (board[0] != ' ' && board[1] == board[0] && board[2] == board[0]) ||
+    (board[3] != ' ' && board[4] == board[3] && board[5] == board[3]) ||
+    (board[6] != ' ' && board[7] == board[6] && board[8] == board[6]) ||
+    (board[0] != ' ' && board[3] == board[0] && board[6] == board[0]) ||
+    (board[1] != ' ' && board[4] == board[1] && board[7] == board[1]) ||
+    (board[2] != ' ' && board[5] == board[2] && board[8] == board[2]) ||
+    (board[0] != ' ' && board[4] == board[0] && board[8] == board[0]) ||
+    (board[2] != ' ' && board[4] == board[2] && board[6] == board[2])
 }
