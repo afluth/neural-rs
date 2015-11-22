@@ -42,7 +42,7 @@ impl AiPlayer {
     }
 
     pub fn get_rating(&self) -> i16 {
-        (self.wins * 4 + self.ties * 6 - self.loses * 4 - self.mistakes) as i16
+        (self.wins * 4 + self.ties * 4 - self.loses * 4 - self.mistakes) as i16
     }
 
     pub fn reproduce(&self, partner: &AiPlayer) -> AiPlayer {
@@ -161,7 +161,7 @@ pub fn play_game<P1: Player, P2: Player>
     player2.set_mark('O');
 
     for i in 0..9 {
-        let mut win;
+        let win;
 
         if (i % 2) == 0 { 
             win = take_turn(player1, player2, &mut board, i);

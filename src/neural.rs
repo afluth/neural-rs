@@ -50,7 +50,7 @@ impl Network {
                 .zip(partner.weights.iter())
                 .map(|(&a, &b)| {
                     // A 1 in 100 chance of mutation occuring
-                    if rand::thread_rng().gen_weighted_bool(100) { 
+                    if rand::thread_rng().gen_weighted_bool(50) { 
                         rand::random::<f32>() * 2f32 - 1f32
                     }
                     else if rand::random::<bool>() { a } else { b }

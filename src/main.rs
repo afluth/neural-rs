@@ -1,34 +1,28 @@
 extern crate rand;
-//extern crate stopwatch;
+extern crate scoped_threadpool;
+extern crate num_cpus;
 
 mod neural;
 mod game;
 
 use game::*;
 use rand::Rng;
-//use stopwatch::Stopwatch;
+use scoped_threadpool::{Pool};
 
 const NUM_PLAYERS: usize = 200;
 const NUM_SURVIVORS: usize = 100;
-const GENERATIONS: usize = 100_000;
+const GENERATIONS: usize = 1_000_000;
 
 fn main() {
     let mut human = HumanPlayer::new();
     let mut players = Vec::with_capacity(NUM_PLAYERS);
-
-    //let mut play_sw = Stopwatch::new();
-    //let mut pop_sw = Stopwatch::new();
     
     populate(&mut players);
 
     for generation in 0..GENERATIONS {
-        //pop_sw.start();
         repopulate(&mut players);
-        //pop_sw.stop();
         
-        //play_sw.start();
         play_round_robin(&mut players);
-        //play_sw.stop();
 
         find_fittest(&mut players);
 
@@ -42,7 +36,7 @@ fn main() {
                     generation, best.wins, best.ties, best.loses, best.mistakes);
             println!("-----------");
 
-            if generation > 0 && generation % 100 == 0 {
+            if generation > 0 && generation % 100_000 == 0 {
                 play_game(best, &mut human);
             }
         }
@@ -56,7 +50,51 @@ fn main() {
     //println!("Repopulate time: {}", pop_sw.elapsed());
 }
 
+fn play_round_robin(players: &mut [AiPlayer]) {
 
+    let mut pool = Pool::new(num_cpus::get() as u32);   
+    bisect_players(&mut pool, players);   
+}
+
+fn bisect_players(pool: &mut Pool, players: &mut [AiPlayer]) {
+    let length = players.len();
+    let bisect = length - (length / 2);
+    
+    let (group1, group2) = players.split_at_mut(bisect);
+    
+    play_groups(pool, group1, group2);
+    
+    if bisect > 1 {
+        bisect_players(pool, group1);
+        bisect_players(pool, group2);
+    }
+}
+
+fn play_groups(pool: &mut Pool, group1: &mut [AiPlayer], group2: &mut [AiPlayer]) {
+    
+    // This assumes group1 is larger if they aren't the same size
+    assert!(group2.len() <= group1.len());
+    for i in 0..group1.len() {
+        let (front, back) = group1.split_at_mut(i);
+        let group1_iter = back.iter_mut()
+                              .chain(front.iter_mut());
+
+        let pairs = group1_iter.zip(group2.iter_mut());
+
+        pool.scoped(|scope| {
+            for (player1, player2) in pairs {
+                scope.execute(move || {
+                    play_game(player1, player2);
+                    play_game(player2, player1);
+                });
+            }
+        });
+
+    }    
+
+}
+
+/*
 fn play_round_robin(players: &mut Vec<AiPlayer>) {
     // Pit the players against each other
     let done: Vec<&mut AiPlayer> = Vec::with_capacity(NUM_PLAYERS);
@@ -72,6 +110,7 @@ fn play_round_robin(players: &mut Vec<AiPlayer>) {
             return done;
         });
 }
+*/
 
 fn find_fittest(players: &mut Vec<AiPlayer>) {
     // Sort by wins/loses/mistakes
