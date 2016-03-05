@@ -1,6 +1,4 @@
-extern crate rand;
-
-use rand::{thread_rng, Rng};
+use rand::{self, thread_rng, Rng};
 
 const NUM_NEURONS: usize = 9;
 const NUM_WEIGHTS: usize = 81 * 2;
@@ -44,14 +42,14 @@ impl Network {
     }
     
     pub fn reproduce(&self, partner: &Network) -> Network {
-        //let mut child_weights = NEW_WEIGHTS;
+        let mut rng = rand::thread_rng();
 
-        let child_weights: Vec<f32> = self.weights.iter()
+        let child_weights = self.weights.iter()
                 .zip(partner.weights.iter())
                 .map(|(&a, &b)| {
                     // A 1 in 100 chance of mutation occuring
-                    if rand::thread_rng().gen_weighted_bool(50) { 
-                        rand::random::<f32>() * 2f32 - 1f32
+                    if rng.gen_weighted_bool(50) { 
+                        rng.gen::<f32>() * 2f32 - 1f32
                     }
                     else if rand::random::<bool>() { a } else { b }
                 })
