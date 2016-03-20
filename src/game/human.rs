@@ -3,19 +3,19 @@ use std::io::{BufRead, stdin};
 use super::board;
 
 pub struct HumanPlayer {
-    mark: char,
+    mark: board::Mark,
 }
 
 impl HumanPlayer {
     pub fn new() -> HumanPlayer {
         HumanPlayer {
-            mark: '*',
+            mark: board::Mark::O,
         }
     }
 }
 
 impl Player for HumanPlayer {
-    fn set_mark(&mut self, mark: char) {
+    fn set_mark(&mut self, mark: board::Mark) {
         self.mark = mark;
     }   
 
@@ -34,7 +34,7 @@ impl Player for HumanPlayer {
         for line in stdin.lock().lines() {
             let index: usize = line.unwrap().parse().unwrap();
        
-            if board[index] == ' ' {
+            if board[index] == board::Mark::None {
                 board[index] = self.mark;
                 return;
             }

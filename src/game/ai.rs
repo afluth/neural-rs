@@ -3,9 +3,10 @@ use super::{board, Player, GameResult, play_game};
 use genetics::Individual;
 use neural::Network;
 
+#[derive(RustcEncodable, RustcDecodable)]
 pub struct AiPlayer {
     pub neural_net: Network,
-    mark: char,
+    mark: board::Mark,
     pub wins: u16,
     pub loses: u16,
     pub ties: u16,
@@ -14,7 +15,7 @@ pub struct AiPlayer {
 
 impl Player for AiPlayer {
 
-    fn set_mark(&mut self, mark: char) {
+    fn set_mark(&mut self, mark: board::Mark) {
         self.mark = mark;
     }   
 
@@ -28,7 +29,7 @@ impl Player for AiPlayer {
             
             if mark == self.mark {
                 inputs[i] = -1f32;
-            } else if mark != ' ' {
+            } else if mark != board::Mark::None {
                 inputs[i] = 1f32;
             }
         }
@@ -45,7 +46,7 @@ impl Player for AiPlayer {
         });
         
         for (i, _) in sorted_outputs {
-            if board[i] == ' ' {
+            if board[i] == board::Mark::None {
                 board[i] = self.mark;
                 return;
             } else {
@@ -75,7 +76,7 @@ impl Individual for AiPlayer {
     fn new() -> AiPlayer {
         AiPlayer {
             neural_net: Network::new(),
-            mark: '*',
+            mark: board::Mark::None,
             wins: 0u16,
             loses: 0u16,
             ties: 0u16,
@@ -98,7 +99,7 @@ impl Individual for AiPlayer {
     fn reproduce(&self, partner: &AiPlayer) -> AiPlayer {
         return AiPlayer {
             neural_net: self.neural_net.reproduce(&partner.neural_net),
-            mark: '*',
+            mark: board::Mark::None,
             wins: 0u16,
             loses: 0u16,
             ties: 0u16,

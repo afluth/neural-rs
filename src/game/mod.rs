@@ -5,10 +5,11 @@ mod ai;
 mod human;
 mod board;
 
+use self::board::Mark;
 use rand;
 
 pub trait Player {
-    fn set_mark(&mut self, char);
+    fn set_mark(&mut self, board::Mark);
     fn play(&mut self, &mut board::View);
     fn game_result(&mut self, GameResult);
 }
@@ -20,10 +21,10 @@ pub enum GameResult {
 }
 
 pub fn play_game<P1: Player, P2: Player>(player1: &mut P1, player2: &mut P2) {
-    let mut board = [' '; 9];
+    let mut board = board::Board::new();
 
-    player1.set_mark('X');
-    player2.set_mark('O');
+    player1.set_mark(Mark::X);
+    player2.set_mark(Mark::O);
 
     let p2_rotation = rand::random();
 
@@ -31,10 +32,10 @@ pub fn play_game<P1: Player, P2: Player>(player1: &mut P1, player2: &mut P2) {
         let win;
 
         if (i % 2) == 0 {
-            let mut view = board::get_view(&mut board, board::Rotation::Bottom);
+            let mut view = board.get_view(board::Rotation::Bottom);
             win = take_turn(player1, player2, &mut view, i);
         } else {
-            let mut view = board::get_view(&mut board, p2_rotation);
+            let mut view = board.get_view(p2_rotation);
             win = take_turn(player2, player1, &mut view, i);
         }
 
@@ -69,12 +70,12 @@ fn take_turn<P: Player, O: Player>(player: &mut P,
 }
 
 fn check_for_win(board: &board::View) -> bool {
-    (board[0] != ' ' && board[1] == board[0] && board[2] == board[0]) ||
-    (board[3] != ' ' && board[4] == board[3] && board[5] == board[3]) ||
-    (board[6] != ' ' && board[7] == board[6] && board[8] == board[6]) ||
-    (board[0] != ' ' && board[3] == board[0] && board[6] == board[0]) ||
-    (board[1] != ' ' && board[4] == board[1] && board[7] == board[1]) ||
-    (board[2] != ' ' && board[5] == board[2] && board[8] == board[2]) ||
-    (board[0] != ' ' && board[4] == board[0] && board[8] == board[0]) ||
-    (board[2] != ' ' && board[4] == board[2] && board[6] == board[2])
+    (board[0] != Mark::None && board[1] == board[0] && board[2] == board[0]) ||
+    (board[3] != Mark::None && board[4] == board[3] && board[5] == board[3]) ||
+    (board[6] != Mark::None && board[7] == board[6] && board[8] == board[6]) ||
+    (board[0] != Mark::None && board[3] == board[0] && board[6] == board[0]) ||
+    (board[1] != Mark::None && board[4] == board[1] && board[7] == board[1]) ||
+    (board[2] != Mark::None && board[5] == board[2] && board[8] == board[2]) ||
+    (board[0] != Mark::None && board[4] == board[0] && board[8] == board[0]) ||
+    (board[2] != Mark::None && board[4] == board[2] && board[6] == board[2])
 }

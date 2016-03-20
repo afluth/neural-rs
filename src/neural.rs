@@ -7,6 +7,7 @@ fn sigmoid(x: f32) -> f32 {
     1f32 / (1f32 + (-x).exp())
 }
 
+#[derive(RustcEncodable, RustcDecodable)]
 pub struct Network {
     weights: Vec<f32>,
 }
