@@ -92,8 +92,7 @@ impl Individual for AiPlayer {
     }
 
     fn get_rating(&self) -> i32 {
-        (self.wins * 4 + self.ties * 4 - self.loses * 4 - self.mistakes) as i32
-        //self.wins as i32
+        self.wins as i32 + self.ties as i32 - self.loses as i32 - (self.mistakes as i32 / 4)
     }
 
     fn reproduce(&self, partner: &AiPlayer) -> AiPlayer {
