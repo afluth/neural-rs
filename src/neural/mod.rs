@@ -1,5 +1,7 @@
 use rand::{self, thread_rng, Rng};
 
+mod network;
+
 const NUM_NEURONS: usize = 9;
 const NUM_WEIGHTS: usize = 81 * 2;
 
