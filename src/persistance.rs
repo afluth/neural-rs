@@ -29,15 +29,14 @@ pub fn load() -> Option<Vec<AiPlayer>> {
 
 pub fn save(players: &Vec<AiPlayer>) ->  Result<(), Box<error::Error>> {
     
-    let mut file = try!(fs::OpenOptions::new()
+    let encoded = json::encode(players)?.into_bytes();
+    
+    let mut file = fs::OpenOptions::new()
     	.write(true)
     	.create(true)
     	.truncate(true)
-    	.open(STATE_FILE));
-    
-    let encoded = try!(json::encode(players));
-    
-    try!(file.write_all(&encoded.into_bytes()));
+    	.open(STATE_FILE)?
+        .write_all(&encoded)?;
     
     Ok(())
 }

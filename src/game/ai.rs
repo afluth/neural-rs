@@ -13,6 +13,19 @@ pub struct AiPlayer {
     pub mistakes: u16,
 }
 
+impl AiPlayer {
+    pub fn with_network(net: Network) -> AiPlayer {
+        AiPlayer {
+            neural_net: net,
+            mark: board::Mark::None,
+            wins: 0u16,
+            loses: 0u16,
+            ties: 0u16,
+            mistakes: 0u16,
+        }
+    }
+}
+
 impl Player for AiPlayer {
 
     fn set_mark(&mut self, mark: board::Mark) {
@@ -35,15 +48,21 @@ impl Player for AiPlayer {
         }
         
         // Run it through the neural network
-        let outputs = self.neural_net.calc(inputs);
+        let outputs = self.neural_net.run(&inputs);
         
+        println!("{:?}", outputs);
+
         // Make a move
         let mut sorted_outputs = outputs.iter()
+            .last().unwrap()
+            .iter()
             .enumerate()
             .collect::<Vec<_>>();
+        
         sorted_outputs.sort_by(|&(_, a), &(_, b)| {
-            a.abs().partial_cmp(&b.abs()).unwrap()
+            b.abs().partial_cmp(&a.abs()).unwrap()
         });
+        println!("{:?}", sorted_outputs);
         
         for (i, _) in sorted_outputs {
             if board[i] == board::Mark::None {
@@ -75,7 +94,7 @@ impl Individual for AiPlayer {
 
     fn new() -> AiPlayer {
         AiPlayer {
-            neural_net: Network::new(),
+            neural_net: Network::with_dimensions(&[9, 9, 9]),
             mark: board::Mark::None,
             wins: 0u16,
             loses: 0u16,
